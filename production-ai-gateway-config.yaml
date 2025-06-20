@@ -1,0 +1,64 @@
+# Production-Ready Higress AI Gateway Configuration
+# This configuration has been tested and proven to work
+
+apiVersion: extensions.higress.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: ai-proxy-qwen-production
+  namespace: higress-system
+  labels:
+    higress.io/resource-definer: higress
+spec:
+  priority: 100
+  matchRules:
+    - config:
+        provider:
+          type: dashscope
+          qwenEnableCompatible: true
+          apiTokens:
+            - "sk-49dc7c806e0a4ad08f076b22c4fbee86"  # Replace with your API key
+          modelMapping:
+            'gpt-3': qwen-turbo
+            'gpt-4': qwen-max
+            '*': qwen-turbo
+          timeout: 120000
+      ingress:
+        - higress-system/ai-route-production
+  url: oci://higress-registry.cn-hangzhou.cr.aliyuncs.com/plugins/ai-proxy:1.0.0
+---
+apiVersion: networking.higress.io/v1
+kind: McpBridge
+metadata:
+  name: qwen-production
+  namespace: higress-system
+spec:
+  registries:
+  - domain: dashscope.aliyuncs.com
+    name: llm-qwen32B.internal
+    port: 443
+    protocol: https
+    type: dns
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-route-production
+  namespace: higress-system
+  labels:
+    higress.io/resource-definer: higress
+  annotations:
+    higress.io/destination: llm-qwen32B.internal.dns:443
+    higress.io/ignore-path-case: "true"
+spec:
+  ingressClassName: higress
+  rules:
+  - host: ai.yourdomain.com  # Replace with your domain
+    http:
+      paths:
+      - path: /v1
+        pathType: Prefix
+        backend:
+          resource:
+            apiGroup: networking.higress.io
+            kind: McpBridge
+            name: qwen-production 

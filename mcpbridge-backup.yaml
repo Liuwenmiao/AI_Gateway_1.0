@@ -1,0 +1,20 @@
+apiVersion: networking.higress.io/v1
+kind: McpBridge
+metadata:
+  creationTimestamp: "2025-06-05T14:33:44Z"
+  generation: 4
+  name: default
+  namespace: higress-system
+  resourceVersion: "208732"
+  uid: 3c9189f2-9cfa-4c5e-b9ab-00584b9a685a
+spec:
+  registries:
+  - domain: dashscope.aliyuncs.com
+    name: llm-qwen32B.internal
+    port: 443
+    protocol: https
+    type: dns
+  - domain: kubernetes.default.svc.cluster.local
+    name: smartGW
+    port: 443
+    type: kubernetes

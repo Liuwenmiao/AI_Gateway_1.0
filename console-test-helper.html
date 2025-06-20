@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Higress AI Gateway - Interactive Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 30px; border-radius: 10px; }
+        .test-area { background: white; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .response { background: #e8f5e8; padding: 15px; margin: 10px 0; border-radius: 5px; white-space: pre-wrap; }
+        .error { background: #fee; color: #c00; }
+        .info { color: #666; font-size: 14px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Higress AI Gateway - Interactive Test</h1>
+        <p class="info">Test your AI Gateway with real responses!</p>
+        
+        <div class="test-area">
+            <h3>AI Configuration</h3>
+            <label>Model:</label>
+            <select id="model">
+                <option value="qwen-turbo">Qwen Turbo (Fast)</option>
+                <option value="qwen-max">Qwen Max (Best Quality)</option>
+                <option value="qwen-plus">Qwen Plus (Balanced)</option>
+            </select>
+            
+            <label>Max Tokens:</label>
+            <input type="number" id="maxTokens" value="100" min="1" max="2000">
+            
+            <label>Your Message:</label>
+            <textarea id="message" rows="4" placeholder="Type your message here...">Hello! This is an interactive test of my AI Gateway. Can you tell me a fun fact?</textarea>
+            
+            <button onclick="testAI()">🚀 Send to AI Gateway</button>
+        </div>
+        
+        <div class="test-area">
+            <h3>AI Response</h3>
+            <div id="response">Click "Send to AI Gateway" to test...</div>
+        </div>
+        
+        <div class="info">
+            <strong>Endpoint:</strong> http://192.168.49.1:8889/compatible-mode/v1/chat/completions<br>
+            <strong>Status:</strong> <span id="status">Ready</span><br>
+            <strong>Last Test:</strong> <span id="lastTest">None</span>
+        </div>
+    </div>
+
+    <script>
+        async function testAI() {
+            const model = document.getElementById('model').value;
+            const maxTokens = parseInt(document.getElementById('maxTokens').value);
+            const message = document.getElementById('message').value;
+            const responseDiv = document.getElementById('response');
+            const statusSpan = document.getElementById('status');
+            const lastTestSpan = document.getElementById('lastTest');
+            
+            if (!message.trim()) {
+                responseDiv.innerHTML = '<div class="error">Please enter a message to test.</div>';
+                return;
+            }
+            
+            statusSpan.textContent = 'Testing...';
+            responseDiv.innerHTML = 'Sending request to AI Gateway...';
+            
+            try {
+                const response = await fetch('http://192.168.49.1:8889/compatible-mode/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer sk-49dc7c806e0a4ad08f076b22c4fbee86'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: message }],
+                        max_tokens: maxTokens
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.choices && data.choices[0]) {
+                    const aiResponse = data.choices[0].message.content;
+                    const usage = data.usage;
+                    
+                    responseDiv.innerHTML = `
+                        <div class="response">
+                            <strong>AI Response:</strong><br>
+                            ${aiResponse}
+                        </div>
+                        <div class="info">
+                            <strong>Model:</strong> ${data.model}<br>
+                            <strong>Tokens:</strong> ${usage.prompt_tokens} prompt + ${usage.completion_tokens} completion = ${usage.total_tokens} total
+                        </div>
+                    `;
+                    statusSpan.textContent = 'Success ✅';
+                } else {
+                    responseDiv.innerHTML = `<div class="error">Error: ${JSON.stringify(data, null, 2)}</div>`;
+                    statusSpan.textContent = 'Error ❌';
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<div class="error">Connection Error: ${error.message}</div>`;
+                statusSpan.textContent = 'Connection Failed ❌';
+            }
+            
+            lastTestSpan.textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Test on page load
+        window.onload = function() {
+            // You can auto-test here if desired
+        };
+    </script>
+</body>
+</html> 

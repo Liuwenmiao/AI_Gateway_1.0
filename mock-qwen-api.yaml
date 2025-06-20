@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-qwen-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-qwen-api
+  template:
+    metadata:
+      labels:
+        app: mock-qwen-api
+    spec:
+      containers:
+      - name: mock-api
+        image: httpd:2.4-alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: mock-responses
+          mountPath: /usr/local/apache2/htdocs
+      volumes:
+      - name: mock-responses
+        configMap:
+          name: mock-qwen-responses
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-qwen-api
+  namespace: default
+spec:
+  selector:
+    app: mock-qwen-api
+  ports:
+  - port: 443
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mock-qwen-responses
+  namespace: default
+data:
+  index.html: |
+    {
+      "id": "mock-chat-completion",
+      "object": "chat.completion",
+      "created": 1677652288,
+      "model": "qwen-turbo",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Hello! I'm Qwen, an AI assistant created by Alibaba Cloud. I'm here to help you with various tasks and answer your questions. How can I assist you today?"
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 10,
+        "completion_tokens": 25,
+        "total_tokens": 35
+      }
+    } 
